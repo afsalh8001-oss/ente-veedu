@@ -1,0 +1,454 @@
+{
+  "entities": {
+    "Player": {
+      "title": "Player",
+      "description": "A resident and their claimed house plot in the Ente Veedu Kerala village.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "username": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "plotX": { "type": "number" },
+        "plotY": { "type": "number" },
+        "houseStyle": { "type": "string", "enum": ["tiled", "nalukettu", "modern", "tharavad"] },
+        "roofColor": { "type": "string", "minLength": 4, "maxLength": 20 },
+        "wallColor": { "type": "string", "minLength": 4, "maxLength": 20 },
+        "skinTone": { "type": "string", "minLength": 4, "maxLength": 20 },
+        "outfitType": { "type": "string", "enum": ["mundu", "sari", "shirt"] },
+        "outfitColor": { "type": "string", "minLength": 4, "maxLength": 20 },
+        "additions": { "type": "array" },
+        "heartsCount": { "type": "number" },
+        "coins": { "type": "number" },
+        "streak": { "type": "number" },
+        "lastClaimDate": { "type": "string", "maxLength": 12 },
+        "dailyTasks": { "type": "array" },
+        "dailyCoinsDate": { "type": "string", "maxLength": 12 },
+        "dailyCoinsEarned": { "type": "number" },
+        "claimedMilestones": { "type": "array" },
+        "unlockedItems": { "type": "array" },
+        "claimedRaceDates": { "type": "array" },
+        "boatBadgeUntil": { "type": "number" },
+        "wateredDate": { "type": "string", "maxLength": 12 },
+        "fedCowDate": { "type": "string", "maxLength": 12 },
+        "sweptDate": { "type": "string", "maxLength": 12 },
+        "litLampDate": { "type": "string", "maxLength": 12 },
+        "shopType": { "type": "string", "enum": ["bakery", "tailor", "fish_stall", "chaya_kada", "flower_shop"] },
+        "shopIncomeDate": { "type": "string", "maxLength": 12 },
+        "shopIncomeToday": { "type": "number" },
+        "workShiftDate": { "type": "string", "maxLength": 12 },
+        "mayorMonth": { "type": "string", "maxLength": 10 },
+        "lastClaimedOrderId": { "type": "string", "maxLength": 128 },
+        "health": { "type": "number" },
+        "lastInjuryReason": { "type": "string", "maxLength": 80 },
+        "bankBalance": { "type": "number" },
+        "lastInterestDate": { "type": "string", "maxLength": 12 },
+        "quizDate": { "type": "string", "maxLength": 12 },
+        "accessory": { "type": "string", "enum": ["none", "sunglasses", "cap", "garland", "umbrella", "gold_chain"] },
+        "furniture": { "type": "array" },
+        "lastRestDate": { "type": "string", "maxLength": 12 },
+        "lastChatAt": { "type": "string", "format": "date-time" },
+        "lastEmote": { "type": "string", "enum": ["wave", "laugh", "heart", "cheers"] },
+        "lastEmoteAt": { "type": "string", "format": "date-time" },
+        "lastWaveAt": { "type": "string", "format": "date-time" },
+        "lastSuggestionAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "username",
+        "plotX",
+        "plotY",
+        "houseStyle",
+        "roofColor",
+        "wallColor",
+        "skinTone",
+        "outfitType",
+        "outfitColor",
+        "additions",
+        "heartsCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UsernameClaim": {
+      "title": "UsernameClaim",
+      "description": "Uniqueness lock mapping a normalized @username to its owner uid.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "HouseHeart": {
+      "title": "HouseHeart",
+      "description": "One-per-user heart vote on a player's house.",
+      "type": "object",
+      "properties": {
+        "voterUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["voterUid", "createdAt"]
+    },
+    "Suggestion": {
+      "title": "Suggestion",
+      "description": "A community building suggestion with vote count and status.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "buildingType": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUsername": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "votes": { "type": "number" },
+        "status": { "type": "string", "enum": ["open", "built", "archived"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "buildingType", "authorUid", "authorUsername", "votes", "status", "createdAt", "updatedAt"]
+    },
+    "SuggestionVote": {
+      "title": "SuggestionVote",
+      "description": "One-per-user upvote record for a community building suggestion.",
+      "type": "object",
+      "properties": {
+        "voterUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["voterUid", "createdAt"]
+    },
+    "Building": {
+      "title": "Building",
+      "description": "A community landmark constructed in the village.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "label": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "suggestionId": { "type": "string", "maxLength": 128 },
+        "electionMonth": { "type": "string", "maxLength": 10 },
+        "builtByUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "builtAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "label", "x", "y", "builtByUid", "builtAt"]
+    },
+    "DoorMessage": {
+      "title": "DoorMessage",
+      "description": "A short nameplate message left on a resident's door (max 60 chars).",
+      "type": "object",
+      "properties": {
+        "targetUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUsername": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["targetUid", "authorUid", "authorUsername", "message", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Live public message sent in the Chaya Kada tea shop (max 140 chars).",
+      "type": "object",
+      "properties": {
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUsername": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorUid", "authorUsername", "text", "createdAt"]
+    },
+    "ChayaPresence": {
+      "title": "ChayaPresence",
+      "description": "20-second presence heartbeat for residents currently inside Chaya Kada.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "username": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "lastSeen": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "username", "lastSeen"]
+    },
+    "ChatReport": {
+      "title": "ChatReport",
+      "description": "Abuse report filed against a Chaya Kada chat message.",
+      "type": "object",
+      "properties": {
+        "messageId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reportedUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reportedUsername": { "type": "string", "minLength": 3, "maxLength": 20 },
+        "messageText": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "reporterUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["messageId", "reportedUid", "reportedUsername", "messageText", "reporterUid", "createdAt"]
+    },
+    "Race": {
+      "title": "Race",
+      "description": "Weekly Saturday Vallam Kali boat race state and 4-team scores.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "minLength": 10, "maxLength": 12 },
+        "status": { "type": "string", "enum": ["live", "finished"] },
+        "scores": { "type": "object" },
+        "winnerTeam": { "type": "string", "enum": ["chundan_red", "backwater_blue", "paddy_green", "coconut_gold"] },
+        "participantCount": { "type": "number" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["date", "status", "scores", "participantCount", "startedAt"]
+    },
+    "RaceParticipant": {
+      "title": "RaceParticipant",
+      "description": "A resident's chosen boat race team for a specific race date.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "username": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "team": { "type": "string", "enum": ["chundan_red", "backwater_blue", "paddy_green", "coconut_gold"] },
+        "taps": { "type": "number" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "username", "team", "taps", "joinedAt"]
+    },
+    "VillageMeta": {
+      "title": "VillageMeta",
+      "description": "Singleton coordination state for 24-hour suggestion resolution.",
+      "type": "object",
+      "properties": {
+        "nextResolutionAt": { "type": "number" },
+        "lastResolvedBuilding": { "type": "string", "maxLength": 80 },
+        "updatedByUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nextResolutionAt", "updatedByUid", "updatedAt"]
+    },
+    "WardStat": {
+      "title": "WardStat",
+      "description": "Weekly leaderboard counters per ~25-house ward.",
+      "type": "object",
+      "properties": {
+        "weekKey": { "type": "string", "minLength": 7, "maxLength": 12, "pattern": "^[0-9]{4}-W[0-9]{2}$" },
+        "wardId": { "type": "number" },
+        "tasksCompleted": { "type": "number" },
+        "decorCoinsSpent": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["weekKey", "wardId", "tasksCompleted", "decorCoinsSpent", "updatedAt"]
+    },
+    "ShopOrder": {
+      "title": "ShopOrder",
+      "description": "Verified ledger purchase (2 coins) from a neighbour's plot shop.",
+      "type": "object",
+      "properties": {
+        "buyerUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "buyerUsername": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "sellerUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "shopType": { "type": "string", "enum": ["bakery", "tailor", "fish_stall", "chaya_kada", "flower_shop"] },
+        "amount": { "type": "number" },
+        "dateKey": { "type": "string", "maxLength": 12 },
+        "claimed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["buyerUid", "buyerUsername", "sellerUid", "shopType", "amount", "dateKey", "claimed", "createdAt"]
+    },
+    "Election": {
+      "title": "Election",
+      "description": "Monthly Mayor election status and winner record.",
+      "type": "object",
+      "properties": {
+        "month": { "type": "string", "minLength": 7, "maxLength": 10, "pattern": "^[0-9]{4}-[0-9]{2}$" },
+        "status": { "type": "string", "enum": ["open", "closed"] },
+        "winnerUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "winnerUsername": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "winnerVotes": { "type": "number" },
+        "mayorUsedBuild": { "type": "boolean" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "closedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["month", "status", "startedAt"]
+    },
+    "ElectionCandidate": {
+      "title": "ElectionCandidate",
+      "description": "A 7-day-streak resident running for monthly Mayor.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "username": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "manifesto": { "type": "string", "minLength": 5, "maxLength": 100 },
+        "votes": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "username", "manifesto", "votes", "createdAt"]
+    },
+    "ElectionVote": {
+      "title": "ElectionVote",
+      "description": "One-per-user Mayor ballot receipt.",
+      "type": "object",
+      "properties": {
+        "voterUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "candidateUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["voterUid", "candidateUid", "createdAt"]
+    },
+    "FestivalProgress": {
+      "title": "FestivalProgress",
+      "description": "Seasonal festival community mini-goal counter.",
+      "type": "object",
+      "properties": {
+        "festivalId": { "type": "string", "enum": ["onam", "vishu", "pooram", "christmas"] },
+        "count": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["festivalId", "count", "updatedAt"]
+    },
+    "NewsItem": {
+      "title": "NewsItem",
+      "description": "Ente Veedu Vaartha newspaper headline.",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string", "enum": ["stage", "building", "race", "mayor", "ward", "festival"] },
+        "headlineEn": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "headlineMl": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["category", "headlineEn", "headlineMl", "createdAt"]
+    },
+    "Postcard": {
+      "title": "Postcard",
+      "description": "Private Kerala postcard mailed via the Post Office between two residents.",
+      "type": "object",
+      "properties": {
+        "senderUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderUsername": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "recipientUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recipientUsername": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "stamp": { "type": "string", "enum": ["houseboat", "kathakali", "palm", "lighthouse"] },
+        "message": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderUid", "senderUsername", "recipientUid", "recipientUsername", "stamp", "message", "read", "createdAt"]
+    },
+    "CinemaSeat": {
+      "title": "CinemaSeat",
+      "description": "Occupied theatre seat in Sree Cinema Talkies.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "username": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "row": { "type": "number" },
+        "col": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "username", "row", "col", "updatedAt"]
+    },
+    "CinemaChat": {
+      "title": "CinemaChat",
+      "description": "Live audience message during an hourly Cinema Talkies screening.",
+      "type": "object",
+      "properties": {
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUsername": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z0-9_]+$" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "hourKey": { "type": "string", "minLength": 13, "maxLength": 16, "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorUid", "authorUsername", "text", "hourKey", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/players/{uid}": {
+      "schema": { "$ref": "#/entities/Player" },
+      "description": "Public resident plots, customization, coins, streaks & reactions."
+    },
+    "/players/{uid}/hearts/{voterUid}": {
+      "schema": { "$ref": "#/entities/HouseHeart" },
+      "description": "Enforces 1 heart per user per house."
+    },
+    "/usernames/{username}": {
+      "schema": { "$ref": "#/entities/UsernameClaim" },
+      "description": "Enforces unique @username handles."
+    },
+    "/suggestions/{suggestionId}": {
+      "schema": { "$ref": "#/entities/Suggestion" },
+      "description": "Community building suggestions."
+    },
+    "/suggestions/{suggestionId}/votes/{voterUid}": {
+      "schema": { "$ref": "#/entities/SuggestionVote" },
+      "description": "Enforces 1 vote per user per suggestion."
+    },
+    "/buildings/{buildingId}": {
+      "schema": { "$ref": "#/entities/Building" },
+      "description": "Built village landmarks."
+    },
+    "/doors/{doorId}": {
+      "schema": { "$ref": "#/entities/DoorMessage" },
+      "description": "Door nameplate messages left for residents."
+    },
+    "/chat/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Live public chat messages at the Chaya Kada."
+    },
+    "/chayaPresence/{uid}": {
+      "schema": { "$ref": "#/entities/ChayaPresence" },
+      "description": "Active residents inside the Chaya Kada tea shop."
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/ChatReport" },
+      "description": "Write-only chat moderation reports."
+    },
+    "/races/{raceDate}": {
+      "schema": { "$ref": "#/entities/Race" },
+      "description": "Weekly Saturday Vallam Kali boat races."
+    },
+    "/races/{raceDate}/participants/{uid}": {
+      "schema": { "$ref": "#/entities/RaceParticipant" },
+      "description": "Team assignment for each Vallam Kali racer."
+    },
+    "/village_meta/{metaId}": {
+      "schema": { "$ref": "#/entities/VillageMeta" },
+      "description": "Village-wide 24-hour resolution schedule."
+    },
+    "/ward_stats/{weekKey}/wards/{wardId}": {
+      "schema": { "$ref": "#/entities/WardStat" },
+      "description": "Weekly Cleanest & Most Decorated ward leaderboard stats."
+    },
+    "/shop_orders/{orderId}": {
+      "schema": { "$ref": "#/entities/ShopOrder" },
+      "description": "Buyer-to-seller 2-coin plot shop orders."
+    },
+    "/elections/{month}": {
+      "schema": { "$ref": "#/entities/Election" },
+      "description": "Monthly Mayor election state."
+    },
+    "/elections/{month}/candidates/{uid}": {
+      "schema": { "$ref": "#/entities/ElectionCandidate" },
+      "description": "Mayor candidates with 7-day streaks."
+    },
+    "/elections/{month}/votes/{voterUid}": {
+      "schema": { "$ref": "#/entities/ElectionVote" },
+      "description": "One vote per resident per month."
+    },
+    "/festivals/{festKey}": {
+      "schema": { "$ref": "#/entities/FestivalProgress" },
+      "description": "Seasonal festival community mini-goal progress."
+    },
+    "/news/{newsId}": {
+      "schema": { "$ref": "#/entities/NewsItem" },
+      "description": "Ente Veedu Vaartha auto-generated headlines."
+    },
+    "/postcards/{postcardId}": {
+      "schema": { "$ref": "#/entities/Postcard" },
+      "description": "Postcards sent between neighbours at the Post Office."
+    },
+    "/cinema_seats/{uid}": {
+      "schema": { "$ref": "#/entities/CinemaSeat" },
+      "description": "Active cinema audience seats."
+    },
+    "/cinema_chat/{msgId}": {
+      "schema": { "$ref": "#/entities/CinemaChat" },
+      "description": "Live cinema theatre chat messages per hourly screening."
+    }
+  }
+}

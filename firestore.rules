@@ -1,0 +1,1133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUsername(name) {
+      return name is string && name.size() >= 3 && name.size() <= 20 && name.matches('^[a-z0-9_]+$');
+    }
+
+    function isValidColor(val) {
+      return val is string && val.size() >= 4 && val.size() <= 20;
+    }
+
+    function isValidDateKey(val) {
+      return val is string && val.size() >= 8 && val.size() <= 12 && val.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isValidMonthKey(val) {
+      return val is string && val.size() >= 7 && val.size() <= 10 && val.matches('^[0-9]{4}-[0-9]{2}$');
+    }
+
+    function isValidWeekKey(val) {
+      return val is string && val.size() >= 7 && val.size() <= 12 && val.matches('^[0-9]{4}-W[0-9]{2}$');
+    }
+
+    function isValidShopType(val) {
+      return val in ['bakery', 'tailor', 'fish_stall', 'chaya_kada', 'flower_shop'];
+    }
+
+    function isValidPlayer(data, uid) {
+      return data.keys().hasAll([
+          'uid', 'username', 'plotX', 'plotY', 'houseStyle',
+          'roofColor', 'wallColor', 'skinTone', 'outfitType',
+          'outfitColor', 'additions', 'heartsCount', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'username', 'plotX', 'plotY', 'houseStyle',
+          'roofColor', 'wallColor', 'skinTone', 'outfitType',
+          'outfitColor', 'additions', 'heartsCount',
+          'coins', 'streak', 'lastClaimDate', 'dailyTasks',
+          'dailyCoinsDate', 'dailyCoinsEarned', 'claimedMilestones',
+          'unlockedItems', 'claimedRaceDates', 'boatBadgeUntil',
+          'wateredDate', 'fedCowDate', 'sweptDate', 'litLampDate',
+          'shopType', 'shopIncomeDate', 'shopIncomeToday',
+          'workShiftDate', 'mayorMonth', 'lastClaimedOrderId',
+          'health', 'lastInjuryReason', 'bankBalance', 'lastInterestDate',
+          'quizDate', 'accessory', 'furniture', 'lastRestDate',
+          'lastChatAt', 'lastEmote', 'lastEmoteAt',
+          'lastWaveAt', 'lastSuggestionAt', 'createdAt', 'updatedAt'
+        ])
+        && data.uid == uid
+        && isValidUsername(data.username)
+        && data.plotX is int && data.plotY is int
+        && data.plotX >= -500 && data.plotX <= 500
+        && data.plotY >= -500 && data.plotY <= 500
+        && data.houseStyle in ['tiled', 'nalukettu', 'modern', 'tharavad']
+        && isValidColor(data.roofColor)
+        && isValidColor(data.wallColor)
+        && isValidColor(data.skinTone)
+        && data.outfitType in ['mundu', 'sari', 'shirt']
+        && isValidColor(data.outfitColor)
+        && data.additions is list
+        && data.additions.size() <= 12
+        && data.additions.hasOnly([
+          'coconutTree', 'vegGarden', 'cowShed', 'swing', 'rangoli', 'pookalam',
+          'nilavilakku', 'tulsiThara', 'bananaGrove', 'rooster', 'goat', 'smallBoat'
+        ])
+        && (data.additions.size() == 0 || data.additions[0] is string)
+        && data.heartsCount is int && data.heartsCount >= 0
+        && (!('coins' in data) || (data.coins is int && data.coins >= 0))
+        && (!('streak' in data) || (data.streak is int && data.streak >= 0))
+        && (!('lastClaimDate' in data) || isValidDateKey(data.lastClaimDate))
+        && (!('dailyTasks' in data) || (
+          data.dailyTasks is list && data.dailyTasks.size() <= 4
+          && data.dailyTasks.hasOnly(['waterTree', 'feedCow', 'sweepYard', 'lightLamp'])
+        ))
+        && (!('dailyCoinsDate' in data) || isValidDateKey(data.dailyCoinsDate))
+        && (!('dailyCoinsEarned' in data) || (data.dailyCoinsEarned is int && data.dailyCoinsEarned >= 0 && data.dailyCoinsEarned <= 30))
+        && (!('claimedMilestones' in data) || (
+          data.claimedMilestones is list && data.claimedMilestones.size() <= 4
+          && data.claimedMilestones.hasOnly([3, 7, 14, 30])
+        ))
+        && (!('unlockedItems' in data) || (data.unlockedItems is list && data.unlockedItems.size() <= 60))
+        && (!('claimedRaceDates' in data) || (data.claimedRaceDates is list && data.claimedRaceDates.size() <= 200))
+        && (!('boatBadgeUntil' in data) || data.boatBadgeUntil is int)
+        && (!('wateredDate' in data) || isValidDateKey(data.wateredDate))
+        && (!('fedCowDate' in data) || isValidDateKey(data.fedCowDate))
+        && (!('sweptDate' in data) || isValidDateKey(data.sweptDate))
+        && (!('litLampDate' in data) || isValidDateKey(data.litLampDate))
+        && (!('shopType' in data) || isValidShopType(data.shopType))
+        && (!('shopIncomeDate' in data) || isValidDateKey(data.shopIncomeDate))
+        && (!('shopIncomeToday' in data) || (data.shopIncomeToday is int && data.shopIncomeToday >= 0 && data.shopIncomeToday <= 50))
+        && (!('workShiftDate' in data) || isValidDateKey(data.workShiftDate))
+        && (!('mayorMonth' in data) || isValidMonthKey(data.mayorMonth))
+        && (!('lastClaimedOrderId' in data) || isValidId(data.lastClaimedOrderId))
+        && (!('health' in data) || (data.health is int && data.health >= 0 && data.health <= 100))
+        && (!('lastInjuryReason' in data) || (data.lastInjuryReason is string && data.lastInjuryReason.size() <= 80))
+        && (!('bankBalance' in data) || (data.bankBalance is int && data.bankBalance >= 0))
+        && (!('lastInterestDate' in data) || isValidDateKey(data.lastInterestDate))
+        && (!('quizDate' in data) || isValidDateKey(data.quizDate))
+        && (!('accessory' in data) || data.accessory in ['none', 'sunglasses', 'cap', 'garland', 'umbrella', 'gold_chain'])
+        && (!('furniture' in data) || (
+          data.furniture is list && data.furniture.size() <= 6
+          && data.furniture.hasOnly(['wooden_swing', 'brass_uruli', 'teak_sofa', 'reading_lamp', 'clay_planter', 'wall_clock'])
+        ))
+        && (!('lastRestDate' in data) || isValidDateKey(data.lastRestDate))
+        && (!('lastChatAt' in data) || data.lastChatAt is timestamp)
+        && (!('lastEmote' in data) || data.lastEmote in ['wave', 'laugh', 'heart', 'cheers'])
+        && (!('lastEmoteAt' in data) || data.lastEmoteAt is timestamp)
+        && (!('lastWaveAt' in data) || data.lastWaveAt is timestamp)
+        && (!('lastSuggestionAt' in data) || data.lastSuggestionAt is timestamp)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUsernameClaim(data) {
+      return data.keys().hasAll(['uid', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'createdAt'])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.createdAt is timestamp;
+    }
+
+    function isValidHeart(data, voterUid) {
+      return data.keys().hasAll(['voterUid', 'createdAt'])
+        && data.keys().hasOnly(['voterUid', 'createdAt'])
+        && isValidId(data.voterUid)
+        && data.voterUid == voterUid
+        && data.createdAt is timestamp;
+    }
+
+    function isValidSuggestion(data) {
+      return data.keys().hasAll([
+          'text', 'buildingType', 'authorUid', 'authorUsername',
+          'votes', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'text', 'buildingType', 'authorUid', 'authorUsername',
+          'votes', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.text is string
+        && data.text.size() >= 2 && data.text.size() <= 80
+        && data.buildingType is string
+        && data.buildingType.size() >= 2 && data.buildingType.size() <= 40
+        && isValidId(data.authorUid)
+        && isValidUsername(data.authorUsername)
+        && data.votes is int && data.votes >= 1
+        && data.status in ['open', 'built', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSuggestionVote(data, voterUid) {
+      return data.keys().hasAll(['voterUid', 'createdAt'])
+        && data.keys().hasOnly(['voterUid', 'createdAt'])
+        && isValidId(data.voterUid)
+        && data.voterUid == voterUid
+        && data.createdAt is timestamp;
+    }
+
+    function isValidBuilding(data) {
+      return data.keys().hasAll(['type', 'label', 'x', 'y', 'builtByUid', 'builtAt'])
+        && data.keys().hasOnly(['type', 'label', 'x', 'y', 'suggestionId', 'electionMonth', 'builtByUid', 'builtAt'])
+        && data.type is string && data.type.size() >= 2 && data.type.size() <= 40
+        && data.label is string && data.label.size() >= 2 && data.label.size() <= 80
+        && data.x is int && data.x >= -500 && data.x <= 500
+        && data.y is int && data.y >= -500 && data.y <= 500
+        && (!('suggestionId' in data) || isValidId(data.suggestionId))
+        && (!('electionMonth' in data) || isValidMonthKey(data.electionMonth))
+        && isValidId(data.builtByUid)
+        && data.builtAt is timestamp;
+    }
+
+    function isValidDoorMessage(data) {
+      return data.keys().hasAll(['targetUid', 'authorUid', 'authorUsername', 'message', 'createdAt'])
+        && data.keys().hasOnly(['targetUid', 'authorUid', 'authorUsername', 'message', 'createdAt'])
+        && isValidId(data.targetUid)
+        && isValidId(data.authorUid)
+        && isValidUsername(data.authorUsername)
+        && data.message is string
+        && data.message.size() >= 1 && data.message.size() <= 60
+        && data.createdAt is timestamp;
+    }
+
+    function isValidChatMessage(data) {
+      return data.keys().hasAll(['authorUid', 'authorUsername', 'text', 'createdAt'])
+        && data.keys().hasOnly(['authorUid', 'authorUsername', 'text', 'createdAt'])
+        && isValidId(data.authorUid)
+        && isValidUsername(data.authorUsername)
+        && data.text is string
+        && data.text.size() >= 1 && data.text.size() <= 140
+        && data.createdAt is timestamp;
+    }
+
+    function isValidChayaPresence(data, uid) {
+      return data.keys().hasAll(['uid', 'username', 'lastSeen'])
+        && data.keys().hasOnly(['uid', 'username', 'lastSeen'])
+        && data.uid == uid
+        && isValidUsername(data.username)
+        && data.lastSeen is timestamp;
+    }
+
+    function isValidChatReport(data) {
+      return data.keys().hasAll(['messageId', 'reportedUid', 'reportedUsername', 'messageText', 'reporterUid', 'createdAt'])
+        && data.keys().hasOnly(['messageId', 'reportedUid', 'reportedUsername', 'messageText', 'reporterUid', 'createdAt'])
+        && isValidId(data.messageId)
+        && isValidId(data.reportedUid)
+        && isValidUsername(data.reportedUsername)
+        && data.messageText is string && data.messageText.size() >= 1 && data.messageText.size() <= 140
+        && isValidId(data.reporterUid)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidRace(data, raceDate) {
+      return data.keys().hasAll(['date', 'status', 'scores', 'participantCount', 'startedAt'])
+        && data.keys().hasOnly(['date', 'status', 'scores', 'winnerTeam', 'participantCount', 'startedAt', 'finishedAt'])
+        && data.date == raceDate
+        && data.status in ['live', 'finished']
+        && data.scores is map
+        && data.scores.keys().hasAll(['chundan_red', 'backwater_blue', 'paddy_green', 'coconut_gold'])
+        && data.scores.keys().hasOnly(['chundan_red', 'backwater_blue', 'paddy_green', 'coconut_gold'])
+        && data.scores.chundan_red is int && data.scores.chundan_red >= 0
+        && data.scores.backwater_blue is int && data.scores.backwater_blue >= 0
+        && data.scores.paddy_green is int && data.scores.paddy_green >= 0
+        && data.scores.coconut_gold is int && data.scores.coconut_gold >= 0
+        && (!('winnerTeam' in data) || data.winnerTeam in ['chundan_red', 'backwater_blue', 'paddy_green', 'coconut_gold'])
+        && data.participantCount is int && data.participantCount >= 0
+        && data.startedAt is timestamp
+        && (!('finishedAt' in data) || data.finishedAt is timestamp);
+    }
+
+    function isValidRaceParticipant(data, uid) {
+      return data.keys().hasAll(['uid', 'username', 'team', 'taps', 'joinedAt'])
+        && data.keys().hasOnly(['uid', 'username', 'team', 'taps', 'joinedAt'])
+        && data.uid == uid
+        && isValidUsername(data.username)
+        && data.team in ['chundan_red', 'backwater_blue', 'paddy_green', 'coconut_gold']
+        && data.taps is int && data.taps >= 0
+        && data.joinedAt is timestamp;
+    }
+
+    function isValidVillageMeta(data) {
+      return data.keys().hasAll(['nextResolutionAt', 'updatedByUid', 'updatedAt'])
+        && data.keys().hasOnly(['nextResolutionAt', 'lastResolvedBuilding', 'updatedByUid', 'updatedAt'])
+        && data.nextResolutionAt is int
+        && (!('lastResolvedBuilding' in data) || (data.lastResolvedBuilding is string && data.lastResolvedBuilding.size() <= 80))
+        && isValidId(data.updatedByUid)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWardStat(data, weekKey, wardIdStr) {
+      return data.keys().hasAll(['weekKey', 'wardId', 'tasksCompleted', 'decorCoinsSpent', 'updatedAt'])
+        && data.keys().hasOnly(['weekKey', 'wardId', 'tasksCompleted', 'decorCoinsSpent', 'updatedAt'])
+        && data.weekKey == weekKey
+        && wardIdStr.matches('^[0-9]{1,5}$')
+        && data.wardId is int && data.wardId >= 1 && data.wardId <= 10000
+        && string(data.wardId) == wardIdStr
+        && data.tasksCompleted is int && data.tasksCompleted >= 0
+        && data.decorCoinsSpent is int && data.decorCoinsSpent >= 0
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidShopOrder(data) {
+      return data.keys().hasAll(['buyerUid', 'buyerUsername', 'sellerUid', 'shopType', 'amount', 'dateKey', 'claimed', 'createdAt'])
+        && data.keys().hasOnly(['buyerUid', 'buyerUsername', 'sellerUid', 'shopType', 'amount', 'dateKey', 'claimed', 'createdAt'])
+        && isValidId(data.buyerUid)
+        && isValidUsername(data.buyerUsername)
+        && isValidId(data.sellerUid)
+        && data.buyerUid != data.sellerUid
+        && isValidShopType(data.shopType)
+        && data.amount is int && data.amount == 2
+        && isValidDateKey(data.dateKey)
+        && data.claimed is bool
+        && data.createdAt is timestamp;
+    }
+
+    function isValidElection(data, month) {
+      return data.keys().hasAll(['month', 'status', 'startedAt'])
+        && data.keys().hasOnly(['month', 'status', 'winnerUid', 'winnerUsername', 'winnerVotes', 'mayorUsedBuild', 'startedAt', 'closedAt'])
+        && data.month == month
+        && data.status in ['open', 'closed']
+        && (!('winnerUid' in data) || isValidId(data.winnerUid))
+        && (!('winnerUsername' in data) || isValidUsername(data.winnerUsername))
+        && (!('winnerVotes' in data) || (data.winnerVotes is int && data.winnerVotes >= 0))
+        && (!('mayorUsedBuild' in data) || data.mayorUsedBuild is bool)
+        && data.startedAt is timestamp
+        && (!('closedAt' in data) || data.closedAt is timestamp);
+    }
+
+    function isValidCandidate(data, uid) {
+      return data.keys().hasAll(['uid', 'username', 'manifesto', 'votes', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'username', 'manifesto', 'votes', 'createdAt'])
+        && data.uid == uid
+        && isValidUsername(data.username)
+        && data.manifesto is string && data.manifesto.size() >= 5 && data.manifesto.size() <= 100
+        && data.votes is int && data.votes >= 0
+        && data.createdAt is timestamp;
+    }
+
+    function isValidElectionVote(data, voterUid) {
+      return data.keys().hasAll(['voterUid', 'candidateUid', 'createdAt'])
+        && data.keys().hasOnly(['voterUid', 'candidateUid', 'createdAt'])
+        && data.voterUid == voterUid
+        && isValidId(data.candidateUid)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidFestival(data) {
+      return data.keys().hasAll(['festivalId', 'count', 'updatedAt'])
+        && data.keys().hasOnly(['festivalId', 'count', 'updatedAt'])
+        && data.festivalId in ['onam', 'vishu', 'pooram', 'christmas']
+        && data.count is int && data.count >= 1
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidNewsItem(data) {
+      return data.keys().hasAll(['category', 'headlineEn', 'headlineMl', 'createdAt'])
+        && data.keys().hasOnly(['category', 'headlineEn', 'headlineMl', 'createdAt'])
+        && data.category in ['stage', 'building', 'race', 'mayor', 'ward', 'festival']
+        && data.headlineEn is string && data.headlineEn.size() >= 2 && data.headlineEn.size() <= 120
+        && data.headlineMl is string && data.headlineMl.size() >= 2 && data.headlineMl.size() <= 120
+        && data.createdAt is timestamp;
+    }
+
+    function isValidHourKey(val) {
+      return val is string && val.size() >= 13 && val.size() <= 16 && val.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isValidPostcard(data) {
+      return data.keys().hasAll(['senderUid', 'senderUsername', 'recipientUid', 'recipientUsername', 'stamp', 'message', 'read', 'createdAt'])
+        && data.keys().hasOnly(['senderUid', 'senderUsername', 'recipientUid', 'recipientUsername', 'stamp', 'message', 'read', 'createdAt'])
+        && isValidId(data.senderUid)
+        && isValidUsername(data.senderUsername)
+        && isValidId(data.recipientUid)
+        && isValidUsername(data.recipientUsername)
+        && data.stamp in ['houseboat', 'kathakali', 'palm', 'lighthouse']
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 120
+        && data.read is bool
+        && data.createdAt is timestamp;
+    }
+
+    function isValidCinemaSeat(data, uid) {
+      return data.keys().hasAll(['uid', 'username', 'row', 'col', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'username', 'row', 'col', 'updatedAt'])
+        && data.uid == uid
+        && isValidUsername(data.username)
+        && data.row is int && data.row >= 0 && data.row <= 3
+        && data.col is int && data.col >= 0 && data.col <= 5
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCinemaChat(data) {
+      return data.keys().hasAll(['authorUid', 'authorUsername', 'text', 'hourKey', 'createdAt'])
+        && data.keys().hasOnly(['authorUid', 'authorUsername', 'text', 'hourKey', 'createdAt'])
+        && isValidId(data.authorUid)
+        && isValidUsername(data.authorUsername)
+        && data.text is string && data.text.size() >= 1 && data.text.size() <= 120
+        && isValidHourKey(data.hourKey)
+        && data.createdAt is timestamp;
+    }
+
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+    }
+
+    match /players/{uid} {
+      allow get: if isSignedIn() && isValidId(uid);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidId(uid)
+        && uid == request.auth.uid
+        && isValidPlayer(incoming(), uid)
+        && incoming().heartsCount == 0
+        && incoming().get('coins', 0) <= 15
+        && incoming().get('bankBalance', 0) == 0
+        && incoming().get('health', 100) == 100
+        && incoming().get('furniture', []).size() == 0
+        && incoming().get('streak', 0) == 0
+        && incoming().get('dailyTasks', []).size() == 0
+        && !('shopType' in incoming())
+        && !('mayorMonth' in incoming())
+        && !('quizDate' in incoming())
+        && !('lastInterestDate' in incoming())
+        && !('lastClaimedOrderId' in incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/usernames/$(incoming().username));
+
+      allow update: if isSignedIn()
+        && isValidId(uid)
+        && isValidPlayer(incoming(), uid)
+        && incoming().uid == existing().uid
+        && incoming().username == existing().username
+        && incoming().plotX == existing().plotX
+        && incoming().plotY == existing().plotY
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // 1. Owner customizes veedu or outfit
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().get('coins', 0) == existing().get('coins', 0)
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'houseStyle', 'roofColor', 'wallColor', 'skinTone',
+              'outfitType', 'outfitColor', 'additions', 'updatedAt'
+            ]))
+          ||
+          // 2. Owner records suggestion rate-limit timestamp
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && (!('lastSuggestionAt' in existing()) || request.time >= existing().lastSuggestionAt + duration.value(60, 's'))
+            && incoming().lastSuggestionAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['lastSuggestionAt', 'updatedAt']))
+          ||
+          // 3. Resident gives a heart (+1) atomically with heart receipt
+          (incoming().heartsCount == existing().heartsCount + 1
+            && existsAfter(/databases/$(database)/documents/players/$(uid)/hearts/$(request.auth.uid))
+            && incoming().diff(existing()).affectedKeys().hasOnly(['heartsCount', 'updatedAt']))
+          ||
+          // 4. Resident waves at a house
+          (incoming().heartsCount == existing().heartsCount
+            && incoming().lastWaveAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['lastWaveAt', 'updatedAt']))
+          ||
+          // 5. Daily chore claim (anti-cheat: forward-only date, never > 25 coins per claim, locked to 4 unique daily tasks)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().coins > existing().get('coins', 0)
+            && (incoming().coins - existing().get('coins', 0)) <= 25
+            && incoming().streak <= existing().get('streak', 0) + 1
+            && incoming().dailyTasks.size() >= 1
+            && incoming().dailyTasks.size() <= 4
+            && (
+              (existing().get('dailyCoinsDate', '') < incoming().dailyCoinsDate
+                && incoming().dailyTasks.size() == 1
+                && (incoming().coins - existing().get('coins', 0)) == 5
+                && incoming().dailyCoinsEarned == 5)
+              ||
+              (existing().get('dailyCoinsDate', '') == incoming().dailyCoinsDate
+                && incoming().dailyTasks.size() == existing().get('dailyTasks', []).size() + 1
+                && (incoming().coins - existing().get('coins', 0)) == (incoming().dailyTasks.size() == 4 ? 15 : 5)
+                && incoming().dailyCoinsEarned == existing().get('dailyCoinsEarned', 0) + (incoming().coins - existing().get('coins', 0)))
+            )
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'coins', 'streak', 'lastClaimDate', 'dailyTasks', 'dailyCoinsDate',
+              'dailyCoinsEarned', 'wateredDate', 'fedCowDate', 'sweptDate', 'litLampDate', 'updatedAt'
+            ]))
+          ||
+          // 6. Streak milestone claim (3, 7, 14, 30 days)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().claimedMilestones.size() == existing().get('claimedMilestones', []).size() + 1
+            && (
+              ((incoming().coins - existing().get('coins', 0)) == 15 && existing().get('streak', 0) >= 3)
+              || ((incoming().coins - existing().get('coins', 0)) == 35 && existing().get('streak', 0) >= 7)
+              || ((incoming().coins - existing().get('coins', 0)) == 75 && existing().get('streak', 0) >= 14)
+              || ((incoming().coins - existing().get('coins', 0)) == 150 && existing().get('streak', 0) >= 30)
+            )
+            && incoming().diff(existing()).affectedKeys().hasOnly(['coins', 'claimedMilestones', 'updatedAt']))
+          ||
+          // 7. Decorate Shop purchase (coins strictly decrease)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().coins < existing().get('coins', 0)
+            && incoming().coins >= 0
+            && incoming().unlockedItems.size() == existing().get('unlockedItems', []).size() + 1
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'coins', 'unlockedItems', 'additions', 'roofColor', 'updatedAt'
+            ]))
+          ||
+          // 8. Chaya Kada chat rate-limit (2 seconds)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && (!('lastChatAt' in existing()) || request.time >= existing().lastChatAt + duration.value(2, 's'))
+            && incoming().lastChatAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['lastChatAt', 'updatedAt']))
+          ||
+          // 9. Chaya Kada emote
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().lastEmoteAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['lastEmote', 'lastEmoteAt', 'updatedAt']))
+          ||
+          // 10. Vallam Kali race reward claim (verified against finished race + participant team)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().claimedRaceDates.size() == existing().get('claimedRaceDates', []).size() + 1
+            && (
+              (incoming().coins - existing().get('coins', 0)) == 100
+              || (incoming().coins - existing().get('coins', 0)) == 20
+            )
+            && exists(/databases/$(database)/documents/races/$(incoming().claimedRaceDates[incoming().claimedRaceDates.size() - 1])/participants/$(uid))
+            && get(/databases/$(database)/documents/races/$(incoming().claimedRaceDates[incoming().claimedRaceDates.size() - 1])).data.status == 'finished'
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'coins', 'claimedRaceDates', 'boatBadgeUntil', 'updatedAt'
+            ]))
+          ||
+          // 11. Open ONE plot shop on own plot (exact catalog coin deduction)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && !('shopType' in existing())
+            && isValidShopType(incoming().shopType)
+            && incoming().coins >= 0
+            && (
+              (incoming().shopType in ['bakery', 'flower_shop'] && existing().get('coins', 0) - incoming().coins == 40)
+              || (incoming().shopType in ['tailor', 'fish_stall'] && existing().get('coins', 0) - incoming().coins == 45)
+              || (incoming().shopType == 'chaya_kada' && existing().get('coins', 0) - incoming().coins == 50)
+            )
+            && incoming().diff(existing()).affectedKeys().hasOnly(['coins', 'shopType', 'updatedAt']))
+          ||
+          // 12. Buyer pays 2 coins at a neighbour's plot shop
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && existing().get('coins', 0) >= 2
+            && incoming().coins == existing().get('coins', 0) - 2
+            && incoming().diff(existing()).affectedKeys().hasOnly(['coins', 'updatedAt']))
+          ||
+          // 13. Seller collects +2 coins from verified unclaimed shop_orders doc (forward-only date, 50/day cap)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && isValidId(incoming().lastClaimedOrderId)
+            && get(/databases/$(database)/documents/shop_orders/$(incoming().lastClaimedOrderId)).data.sellerUid == uid
+            && get(/databases/$(database)/documents/shop_orders/$(incoming().lastClaimedOrderId)).data.claimed == false
+            && getAfter(/databases/$(database)/documents/shop_orders/$(incoming().lastClaimedOrderId)).data.claimed == true
+            && incoming().coins == existing().get('coins', 0) + 2
+            && incoming().shopIncomeToday >= 2
+            && incoming().shopIncomeToday <= 50
+            && (
+              (existing().get('shopIncomeDate', '') < incoming().shopIncomeDate && incoming().shopIncomeToday == 2)
+              || (existing().get('shopIncomeDate', '') == incoming().shopIncomeDate && incoming().shopIncomeToday == existing().get('shopIncomeToday', 0) + 2)
+            )
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'coins', 'shopIncomeDate', 'shopIncomeToday', 'lastClaimedOrderId', 'updatedAt'
+            ]))
+          ||
+          // 14. Daily 30-second Work Shift (+10 coins, forward-only date, no shop)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && !('shopType' in existing())
+            && existing().get('workShiftDate', '') < incoming().workShiftDate
+            && incoming().coins == existing().get('coins', 0) + 10
+            && incoming().diff(existing()).affectedKeys().hasOnly(['coins', 'workShiftDate', 'updatedAt']))
+          ||
+          // 15. Claim Mayor gold nameplate (verified against closed election winner)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && isValidMonthKey(incoming().mayorMonth)
+            && get(/databases/$(database)/documents/elections/$(incoming().mayorMonth)).data.status == 'closed'
+            && get(/databases/$(database)/documents/elections/$(incoming().mayorMonth)).data.winnerUid == uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['mayorMonth', 'updatedAt']))
+          ||
+          // 16. Mall Outfits & Accessories (either spend >= 10 coins to unlock+equip, or free equip of already-unlocked item)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && (
+              (incoming().coins < existing().get('coins', 0)
+                && (existing().get('coins', 0) - incoming().coins) >= 10
+                && incoming().coins >= 0
+                && incoming().unlockedItems.size() == existing().get('unlockedItems', []).size() + 1
+                && incoming().diff(existing()).affectedKeys().hasOnly([
+                  'coins', 'outfitType', 'outfitColor', 'accessory', 'unlockedItems', 'updatedAt'
+                ]))
+              ||
+              (incoming().diff(existing()).affectedKeys().hasOnly([
+                'outfitType', 'outfitColor', 'accessory', 'updatedAt'
+              ]))
+            ))
+          ||
+          // 17. Mall Furniture purchase (strictly spends >= 12 coins, appends 1 furniture piece)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().coins < existing().get('coins', 0)
+            && (existing().get('coins', 0) - incoming().coins) >= 12
+            && incoming().coins >= 0
+            && incoming().furniture.size() == existing().get('furniture', []).size() + 1
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'coins', 'furniture', 'unlockedItems', 'updatedAt'
+            ]))
+          ||
+          // 18. Paid Food / Tonic / Market / Bakery / Fish / Petrol Chai (strictly spends >= 2 coins to restore health)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().coins < existing().get('coins', 0)
+            && (existing().get('coins', 0) - incoming().coins) >= 2
+            && incoming().coins >= 0
+            && incoming().health >= existing().get('health', 100)
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'coins', 'health', 'lastInjuryReason', 'updatedAt'
+            ]))
+          ||
+          // 19. School Daily Quiz (+10 coins, forward-only quizDate)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && existing().get('quizDate', '') < incoming().quizDate
+            && incoming().coins == existing().get('coins', 0) + 10
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'coins', 'quizDate', 'updatedAt'
+            ]))
+          ||
+          // 20. Co-op Bank Deposit / Withdraw (strict zero-sum conservation between pocket & vault)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().coins >= 0
+            && incoming().bankBalance >= 0
+            && (incoming().coins + incoming().bankBalance) == (existing().get('coins', 0) + existing().get('bankBalance', 0))
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'coins', 'bankBalance', 'updatedAt'
+            ]))
+          ||
+          // 21. Co-op Bank Daily 5% Interest (forward-only date, capped <= 15 into vault)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && existing().get('bankBalance', 0) >= 1
+            && existing().get('lastInterestDate', '') < incoming().lastInterestDate
+            && incoming().bankBalance > existing().get('bankBalance', 0)
+            && (incoming().bankBalance - existing().get('bankBalance', 0)) <= 15
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'bankBalance', 'lastInterestDate', 'updatedAt'
+            ]))
+          ||
+          // 22. Health & Activity updates (Hospital Free Rest, Park, Landmarks, Stadium/Lighthouse falls; zero coin impact)
+          (uid == request.auth.uid
+            && incoming().heartsCount == existing().heartsCount
+            && incoming().health >= 10
+            && incoming().health <= 100
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'health', 'lastInjuryReason', 'updatedAt'
+            ]))
+        );
+
+      allow delete: if false;
+
+      match /hearts/{voterUid} {
+        allow get: if isSignedIn() && isValidId(uid) && isValidId(voterUid);
+        allow list: if false;
+        allow create: if isSignedIn()
+          && isValidId(uid)
+          && isValidId(voterUid)
+          && voterUid == request.auth.uid
+          && isValidHeart(incoming(), voterUid)
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/players/$(uid));
+        allow update, delete: if false;
+      }
+    }
+
+    match /usernames/{username} {
+      allow get: if isSignedIn() && isValidUsername(username);
+      allow list: if false;
+      allow create: if isSignedIn()
+        && isValidUsername(username)
+        && isValidUsernameClaim(incoming())
+        && incoming().createdAt == request.time
+        && !exists(/databases/$(database)/documents/usernames/$(username));
+      allow update, delete: if false;
+    }
+
+    match /suggestions/{suggestionId} {
+      allow get: if isSignedIn() && isValidId(suggestionId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidId(suggestionId)
+        && isValidSuggestion(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().votes == 1
+        && incoming().status == 'open'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/players/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/players/$(request.auth.uid)).data.lastSuggestionAt == request.time
+        && (
+          !('lastSuggestionAt' in get(/databases/$(database)/documents/players/$(request.auth.uid)).data)
+          || request.time >= get(/databases/$(database)/documents/players/$(request.auth.uid)).data.lastSuggestionAt + duration.value(60, 's')
+        );
+
+      allow update: if isSignedIn()
+        && isValidId(suggestionId)
+        && isValidSuggestion(incoming())
+        && existing().status == 'open'
+        && incoming().authorUid == existing().authorUid
+        && incoming().authorUsername == existing().authorUsername
+        && incoming().text == existing().text
+        && incoming().buildingType == existing().buildingType
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (incoming().status == 'open'
+            && incoming().votes == existing().votes + 1
+            && existsAfter(/databases/$(database)/documents/suggestions/$(suggestionId)/votes/$(request.auth.uid))
+            && incoming().diff(existing()).affectedKeys().hasOnly(['votes', 'updatedAt']))
+          ||
+          (incoming().status == 'built'
+            && incoming().votes == existing().votes
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+        );
+
+      allow delete: if false;
+
+      match /votes/{voterUid} {
+        allow get: if isSignedIn() && isValidId(suggestionId) && isValidId(voterUid);
+        allow list: if false;
+        allow create: if isSignedIn()
+          && isValidId(suggestionId)
+          && isValidId(voterUid)
+          && voterUid == request.auth.uid
+          && isValidSuggestionVote(incoming(), voterUid)
+          && incoming().createdAt == request.time
+          && existsAfter(/databases/$(database)/documents/suggestions/$(suggestionId));
+        allow update, delete: if false;
+      }
+    }
+
+    match /buildings/{buildingId} {
+      allow get: if isSignedIn() && isValidId(buildingId);
+      allow list: if isSignedIn();
+      // Strict anti-cheat: clients cannot arbitrarily create buildings; creation must atomically resolve an open voted/deadline suggestion OR an elected Mayor's once-per-term commission
+      allow create: if isSignedIn()
+        && isValidId(buildingId)
+        && isValidBuilding(incoming())
+        && incoming().builtByUid == request.auth.uid
+        && incoming().builtAt == request.time
+        && exists(/databases/$(database)/documents/players/$(request.auth.uid))
+        && isValidId(incoming().suggestionId)
+        && get(/databases/$(database)/documents/suggestions/$(incoming().suggestionId)).data.status == 'open'
+        && getAfter(/databases/$(database)/documents/suggestions/$(incoming().suggestionId)).data.status == 'built'
+        && incoming().type == get(/databases/$(database)/documents/suggestions/$(incoming().suggestionId)).data.buildingType
+        && (
+          (getAfter(/databases/$(database)/documents/village_meta/state).data.updatedAt == request.time
+            && (
+              get(/databases/$(database)/documents/suggestions/$(incoming().suggestionId)).data.votes >= 3
+              || !exists(/databases/$(database)/documents/village_meta/state)
+              || request.time.toMillis() >= get(/databases/$(database)/documents/village_meta/state).data.nextResolutionAt
+            ))
+          ||
+          (isValidMonthKey(incoming().electionMonth)
+            && get(/databases/$(database)/documents/elections/$(incoming().electionMonth)).data.status == 'closed'
+            && get(/databases/$(database)/documents/elections/$(incoming().electionMonth)).data.winnerUid == request.auth.uid
+            && get(/databases/$(database)/documents/elections/$(incoming().electionMonth)).data.get('mayorUsedBuild', false) == false
+            && getAfter(/databases/$(database)/documents/elections/$(incoming().electionMonth)).data.mayorUsedBuild == true)
+        );
+      allow update, delete: if false;
+    }
+
+    match /doors/{doorId} {
+      allow get: if isSignedIn() && isValidId(doorId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidId(doorId)
+        && isValidDoorMessage(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/players/$(incoming().targetUid));
+      allow update: if false;
+      allow delete: if isSignedIn()
+        && isValidId(doorId)
+        && (existing().authorUid == request.auth.uid || existing().targetUid == request.auth.uid);
+    }
+
+    match /chat/{messageId} {
+      allow get: if isSignedIn() && isValidId(messageId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidId(messageId)
+        && isValidChatMessage(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/players/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/players/$(request.auth.uid)).data.lastChatAt == request.time
+        && (
+          !('lastChatAt' in get(/databases/$(database)/documents/players/$(request.auth.uid)).data)
+          || request.time >= get(/databases/$(database)/documents/players/$(request.auth.uid)).data.lastChatAt + duration.value(2, 's')
+        );
+      allow update, delete: if false;
+    }
+
+    match /chayaPresence/{uid} {
+      allow get: if isSignedIn() && isValidId(uid);
+      allow list: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && isValidId(uid)
+        && uid == request.auth.uid
+        && isValidChayaPresence(incoming(), uid)
+        && incoming().lastSeen == request.time;
+      allow delete: if isSignedIn() && isValidId(uid) && uid == request.auth.uid;
+    }
+
+    match /reports/{reportId} {
+      allow get, list: if false;
+      allow create: if isSignedIn()
+        && isValidId(reportId)
+        && isValidChatReport(incoming())
+        && incoming().reporterUid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /races/{raceDate} {
+      allow get: if isSignedIn() && isValidDateKey(raceDate);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidDateKey(raceDate)
+        && isValidRace(incoming(), raceDate)
+        && incoming().status == 'live'
+        && incoming().startedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isValidDateKey(raceDate)
+        && isValidRace(incoming(), raceDate)
+        && existing().status == 'live'
+        && incoming().date == existing().date
+        && incoming().startedAt == existing().startedAt
+        && (
+          // Join team (+1 participant)
+          (incoming().status == 'live'
+            && incoming().scores == existing().scores
+            && incoming().participantCount == existing().participantCount + 1
+            && existsAfter(/databases/$(database)/documents/races/$(raceDate)/participants/$(request.auth.uid))
+            && incoming().diff(existing()).affectedKeys().hasOnly(['participantCount']))
+          ||
+          // Paddle (+1 for caller's joined team)
+          (incoming().status == 'live'
+            && incoming().participantCount == existing().participantCount
+            && exists(/databases/$(database)/documents/races/$(raceDate)/participants/$(request.auth.uid))
+            && incoming().diff(existing()).affectedKeys().hasOnly(['scores'])
+            && (
+              (get(/databases/$(database)/documents/races/$(raceDate)/participants/$(request.auth.uid)).data.team == 'chundan_red'
+                && incoming().scores.chundan_red == existing().scores.chundan_red + 1
+                && incoming().scores.backwater_blue == existing().scores.backwater_blue
+                && incoming().scores.paddy_green == existing().scores.paddy_green
+                && incoming().scores.coconut_gold == existing().scores.coconut_gold)
+              || (get(/databases/$(database)/documents/races/$(raceDate)/participants/$(request.auth.uid)).data.team == 'backwater_blue'
+                && incoming().scores.backwater_blue == existing().scores.backwater_blue + 1
+                && incoming().scores.chundan_red == existing().scores.chundan_red
+                && incoming().scores.paddy_green == existing().scores.paddy_green
+                && incoming().scores.coconut_gold == existing().scores.coconut_gold)
+              || (get(/databases/$(database)/documents/races/$(raceDate)/participants/$(request.auth.uid)).data.team == 'paddy_green'
+                && incoming().scores.paddy_green == existing().scores.paddy_green + 1
+                && incoming().scores.chundan_red == existing().scores.chundan_red
+                && incoming().scores.backwater_blue == existing().scores.backwater_blue
+                && incoming().scores.coconut_gold == existing().scores.coconut_gold)
+              || (get(/databases/$(database)/documents/races/$(raceDate)/participants/$(request.auth.uid)).data.team == 'coconut_gold'
+                && incoming().scores.coconut_gold == existing().scores.coconut_gold + 1
+                && incoming().scores.chundan_red == existing().scores.chundan_red
+                && incoming().scores.backwater_blue == existing().scores.backwater_blue
+                && incoming().scores.paddy_green == existing().scores.paddy_green)
+            ))
+          ||
+          // Resolve race winner
+          (incoming().status == 'finished'
+            && incoming().scores == existing().scores
+            && incoming().participantCount == existing().participantCount
+            && incoming().finishedAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'winnerTeam', 'finishedAt']))
+        );
+
+      allow delete: if false;
+
+      match /participants/{uid} {
+        allow get: if isSignedIn() && isValidDateKey(raceDate) && isValidId(uid);
+        allow list: if false;
+        allow create: if isSignedIn()
+          && isValidDateKey(raceDate)
+          && isValidId(uid)
+          && uid == request.auth.uid
+          && isValidRaceParticipant(incoming(), uid)
+          && incoming().joinedAt == request.time
+          && existsAfter(/databases/$(database)/documents/races/$(raceDate));
+        allow update, delete: if false;
+      }
+    }
+
+    match /village_meta/{metaId} {
+      allow get: if isSignedIn() && metaId == 'state';
+      allow list: if false;
+      allow create: if isSignedIn()
+        && metaId == 'state'
+        && isValidVillageMeta(incoming())
+        && incoming().updatedByUid == request.auth.uid
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && metaId == 'state'
+        && isValidVillageMeta(incoming())
+        && incoming().updatedByUid == request.auth.uid
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'nextResolutionAt', 'lastResolvedBuilding', 'updatedByUid', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /ward_stats/{weekKey}/wards/{wardId} {
+      allow get: if isSignedIn() && isValidWeekKey(weekKey) && isValidId(wardId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidWeekKey(weekKey)
+        && isValidId(wardId)
+        && isValidWardStat(incoming(), weekKey, wardId)
+        && incoming().tasksCompleted <= 1
+        && incoming().decorCoinsSpent <= 100
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidWeekKey(weekKey)
+        && isValidId(wardId)
+        && isValidWardStat(incoming(), weekKey, wardId)
+        && incoming().weekKey == existing().weekKey
+        && incoming().wardId == existing().wardId
+        && incoming().updatedAt == request.time
+        && (
+          (incoming().tasksCompleted == existing().tasksCompleted + 1
+            && incoming().decorCoinsSpent == existing().decorCoinsSpent)
+          ||
+          (incoming().decorCoinsSpent > existing().decorCoinsSpent
+            && incoming().decorCoinsSpent - existing().decorCoinsSpent <= 100
+            && incoming().tasksCompleted == existing().tasksCompleted)
+        )
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'tasksCompleted', 'decorCoinsSpent', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /shop_orders/{orderId} {
+      allow get: if isSignedIn()
+        && isValidId(orderId)
+        && (existing().sellerUid == request.auth.uid || existing().buyerUid == request.auth.uid);
+      allow list: if isSignedIn()
+        && (resource.data.sellerUid == request.auth.uid || resource.data.buyerUid == request.auth.uid);
+      allow create: if isSignedIn()
+        && isValidId(orderId)
+        && isValidShopOrder(incoming())
+        && incoming().buyerUid == request.auth.uid
+        && incoming().claimed == false
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/players/$(incoming().sellerUid))
+        && get(/databases/$(database)/documents/players/$(incoming().sellerUid)).data.shopType == incoming().shopType
+        && getAfter(/databases/$(database)/documents/players/$(request.auth.uid)).data.coins == get(/databases/$(database)/documents/players/$(request.auth.uid)).data.coins - 2;
+      allow update: if isSignedIn()
+        && isValidId(orderId)
+        && isValidShopOrder(incoming())
+        && existing().claimed == false
+        && incoming().claimed == true
+        && existing().sellerUid == request.auth.uid
+        && incoming().buyerUid == existing().buyerUid
+        && incoming().buyerUsername == existing().buyerUsername
+        && incoming().sellerUid == existing().sellerUid
+        && incoming().shopType == existing().shopType
+        && incoming().amount == existing().amount
+        && incoming().dateKey == existing().dateKey
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['claimed']);
+      allow delete: if false;
+    }
+
+    match /elections/{month} {
+      allow get: if isSignedIn() && isValidMonthKey(month);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidMonthKey(month)
+        && isValidElection(incoming(), month)
+        && incoming().status == 'open'
+        && !('winnerUid' in incoming())
+        && incoming().startedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidMonthKey(month)
+        && isValidElection(incoming(), month)
+        && incoming().month == existing().month
+        && incoming().startedAt == existing().startedAt
+        && (
+          (existing().status == 'open'
+            && incoming().status == 'closed'
+            && isValidId(incoming().winnerUid)
+            && isValidUsername(incoming().winnerUsername)
+            && incoming().winnerUsername == get(/databases/$(database)/documents/elections/$(month)/candidates/$(incoming().winnerUid)).data.username
+            && incoming().winnerVotes == get(/databases/$(database)/documents/elections/$(month)/candidates/$(incoming().winnerUid)).data.votes
+            && incoming().closedAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'winnerUid', 'winnerUsername', 'winnerVotes', 'closedAt'
+            ]))
+          ||
+          (existing().status == 'closed'
+            && incoming().status == 'closed'
+            && existing().get('mayorUsedBuild', false) == false
+            && incoming().mayorUsedBuild == true
+            && existing().winnerUid == request.auth.uid
+            && incoming().winnerUid == existing().winnerUid
+            && incoming().winnerUsername == existing().winnerUsername
+            && incoming().winnerVotes == existing().winnerVotes
+            && incoming().closedAt == existing().closedAt
+            && incoming().diff(existing()).affectedKeys().hasOnly(['mayorUsedBuild']))
+        );
+      allow delete: if false;
+
+      match /candidates/{uid} {
+        allow get: if isSignedIn() && isValidMonthKey(month) && isValidId(uid);
+        allow list: if isSignedIn();
+        allow create: if isSignedIn()
+          && isValidMonthKey(month)
+          && isValidId(uid)
+          && uid == request.auth.uid
+          && isValidCandidate(incoming(), uid)
+          && incoming().votes == 0
+          && incoming().createdAt == request.time
+          && get(/databases/$(database)/documents/players/$(uid)).data.streak >= 7
+          && getAfter(/databases/$(database)/documents/elections/$(month)).data.status == 'open';
+        allow update: if isSignedIn()
+          && isValidMonthKey(month)
+          && isValidId(uid)
+          && isValidCandidate(incoming(), uid)
+          && get(/databases/$(database)/documents/elections/$(month)).data.status == 'open'
+          && incoming().uid == existing().uid
+          && incoming().username == existing().username
+          && incoming().manifesto == existing().manifesto
+          && incoming().createdAt == existing().createdAt
+          && incoming().votes == existing().votes + 1
+          && existsAfter(/databases/$(database)/documents/elections/$(month)/votes/$(request.auth.uid))
+          && incoming().diff(existing()).affectedKeys().hasOnly(['votes']);
+        allow delete: if false;
+      }
+
+      match /votes/{voterUid} {
+        allow get: if isSignedIn()
+          && isValidMonthKey(month)
+          && isValidId(voterUid)
+          && voterUid == request.auth.uid;
+        allow list: if false;
+        allow create: if isSignedIn()
+          && isValidMonthKey(month)
+          && isValidId(voterUid)
+          && voterUid == request.auth.uid
+          && isValidElectionVote(incoming(), voterUid)
+          && incoming().createdAt == request.time
+          && get(/databases/$(database)/documents/elections/$(month)).data.status == 'open'
+          && exists(/databases/$(database)/documents/elections/$(month)/candidates/$(incoming().candidateUid));
+        allow update, delete: if false;
+      }
+    }
+
+    match /festivals/{festKey} {
+      allow get: if isSignedIn() && isValidId(festKey);
+      allow list: if false;
+      allow create: if isSignedIn()
+        && isValidId(festKey)
+        && isValidFestival(incoming())
+        && incoming().count == 1
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(festKey)
+        && isValidFestival(incoming())
+        && incoming().festivalId == existing().festivalId
+        && incoming().count == existing().count + 1
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['count', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /news/{newsId} {
+      allow get: if isSignedIn() && isValidId(newsId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidId(newsId)
+        && isValidNewsItem(incoming())
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/players/$(request.auth.uid));
+      allow update, delete: if false;
+    }
+
+    match /postcards/{postcardId} {
+      allow get: if isSignedIn()
+        && isValidId(postcardId)
+        && (existing().recipientUid == request.auth.uid || existing().senderUid == request.auth.uid);
+      allow list: if isSignedIn()
+        && (resource.data.recipientUid == request.auth.uid || resource.data.senderUid == request.auth.uid);
+      allow create: if isSignedIn()
+        && isValidId(postcardId)
+        && isValidPostcard(incoming())
+        && incoming().senderUid == request.auth.uid
+        && incoming().senderUid != incoming().recipientUid
+        && incoming().read == false
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/players/$(incoming().recipientUid));
+      allow update: if isSignedIn()
+        && isValidId(postcardId)
+        && isValidPostcard(incoming())
+        && existing().recipientUid == request.auth.uid
+        && existing().read == false
+        && incoming().read == true
+        && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      allow delete: if false;
+    }
+
+    match /cinema_seats/{uid} {
+      allow get: if isSignedIn() && isValidId(uid);
+      allow list: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && isValidId(uid)
+        && uid == request.auth.uid
+        && isValidCinemaSeat(incoming(), uid)
+        && incoming().updatedAt == request.time;
+      allow delete: if isSignedIn() && isValidId(uid) && uid == request.auth.uid;
+    }
+
+    match /cinema_chat/{msgId} {
+      allow get: if isSignedIn() && isValidId(msgId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidId(msgId)
+        && isValidCinemaChat(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/players/$(request.auth.uid));
+      allow update, delete: if false;
+    }
+  }
+}
